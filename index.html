@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<!-- notes
+		disallow calculation if all fields haven't been completed
+	-->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>BSI Mortality Risk Score Calculator</title>
+	<link rel="stylesheet" href="style.css">
+	<style type="text/css">
+		@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;500;600;700;800&display=swap');
+	</style>
+
+	<script>
+		const text_results = [
+			"The patient has an estimated mortality of <10% at 28-days. They are considered a LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of <10% at 28-days.They are considered a LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of <10% at 28-days.They are considered a LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of <10% at 28-days.They are considered a LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of <10% at 28-days.They are considered a LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of 10-20% at 28-days. They are considered a RELATIVELY LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of 10-20% at 28-days. They are considered a RELATIVELY LOW risk of death from infective complications.<br><br>If the patient is clinically well and the source is uncomplicated, consider an earlier IV-to-oral switch or discharge through the OPAT service..",
+
+			"The patient has an estimated mortality of 20-40% at 28-days. They are considered a MODERATE risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN) may be required based on clinical circumstances. Discuss with the responsible team if not already received..",
+
+			"The patient has an estimated mortality of 20-40% at 28-days. They are considered a MODERATE risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN) may be required based on clinical circumstances. Discuss with the responsible team if not already received.",
+
+			"The patient has an estimated mortality of 40-60% at 28-days. They are considered a MODERATE-to-HIGH risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN) is likely required based on clinical circumstances. Discuss with the responsible team if not already received.",
+
+			"The patient has an estimated mortality of 40-60% at 28-days. They are considered a MODERATE-to-HIGH risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN) is likely required based on clinical circumstances. Discuss with the responsible team to give urgently if not already receive.",
+
+			"The patient has an estimated mortality of 60-80% at 28-days. They are considered a MODERATE-to-HIGH risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN), is likely required to prevent early mortality. Discuss with the responsible team to give urgently if not already receive.",
+
+			"The patient has an estimated mortality of 60-80% at 28-days. They are considered a HIGH risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN), is required to prevent early mortality. Discuss with the responsible team to give urgently if not already receive.",
+
+			"The patient has an estimated mortality of 80-90% at 28-days. They are considered a VERY HIGH risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN), is required to prevent early mortality. Discuss with the responsible team to give urgently if not already received.",
+
+			"The patient has an estimated mortality of >90% at 28-days. They are considered a VERY HIGH risk of death from infective complications.<br><br>Prompt administration of an IV antibiotic, preferably an ESBL/CRO active AMINOGLYCOSIDE (e.g. AMIKACIN), is required to prevent early mortality. Discuss with the responsible team to give urgently if not already received.",
+		];
+
+		window.addEventListener('DOMContentLoaded', function()
+		{
+			var form_1 = document.querySelector('form[data-form="first_form"]');
+
+			form_1.addEventListener('submit', function(event)
+			{
+				event.preventDefault();
+				var inputs_1 = document.querySelectorAll('#questions input');
+				var inputs_2 = document.querySelectorAll('#sub-questions input');
+				var questions_score = 0;
+				var sub_questions_score = 0;
+				var total_score = 0;
+
+				/* calculate first questions */
+				inputs_1.forEach(function(input)
+				{
+					if (input.checked)
+						questions_score += parseInt(input.value, 10);
+				});
+
+				/* calculate sub-questions */
+				inputs_2.forEach(function(input)
+				{
+					if (input.checked)
+						sub_questions_score += parseInt(input.value, 10);
+				});
+
+				/* evaluate pitt bacteraemia sub quiz */
+				if (sub_questions_score == 0 || sub_questions_score == 1)
+					sub_questions_score = 0;
+				else if (sub_questions_score == 2 || sub_questions_score == 3)
+					sub_questions_score = 2;
+				else if (sub_questions_score >= 4)
+					sub_questions_score = 5;
+
+				/* add the quiz and sub-quiz results together */
+				total_score = questions_score + sub_questions_score;
+
+				/* show results container */
+				document.getElementById('results-container').style.display = 'block';
+				
+				/* scroll to bottom of page */
+				window.scrollTo(0,document.body.scrollHeight);
+
+				/* evaluate total score */
+				if (total_score >= 0 && total_score <= 14)
+					document.getElementById("results-message").innerHTML = "<p style=\"font-size:1.5em\">The BSI Mortality Risk Score is: <span style=\"font-size:1.5em\"><b>" + total_score + "</b></span></p>" + text_results[total_score];
+				else if (total_score >= 15)
+					document.getElementById("results-message").innerHTML = "<p style=\"font-size:1.5em\">The BSI Mortality Risk Score is: <span style=\"font-size:1.5em\"><b>" + total_score + "</b></span></p>" + text_results[14];
+			});
+		});
+	</script>
+</head>
+<body>
+	<div id="main-container">
+		<img src="images/chelsea-westminster-logo-w.png" style="float: left; max-width:90px; width: 100%;">
+		<img src="images/chelsea-westminster-logo-nhs.png" style="float: right; margin-bottom: 3em; max-width:250px; width: 100%">
+		<h1 id="page-heading" style="clear: right">Bloodstream Infection Mortality Risk Score</h1>
+		<div class="text-box">Bloodstream infection (BSI) is a major cause of morbidity and mortality. Gram-negative bacilli account for nearly 50% of the cases of BSI. A risk score has been developed to predict the prognosis of patients at the time of diagnosis with Gram-negative BSI based on:
+		<ul>
+			<li>The Pitt bacteraemia score,</li>
+			<li>Source of infection,</li>
+			<li>and two major comorbid medical conditions.</li>
+		</ul>
+		The BSI mortality risk score (BSIMRS) had high prognostic ability to predict mortality in adult patients with Gram-negative BSI.
+		<p><b><i>All questions should be answered based on the patient characteristics at time the blood culture was taken.</i></b></p>
+</div>
+		<div class="notice-box">Please answer all the questions below. When you're happy with your answers, click the 'Calculate' button at the bottom of the page to get your result.<p style="margin-bottom:0;"><i>Once you have finished the risk score, click the list to calculate the risk that the gram-negative bacilli could be a multidrug-resistant organism.</i></p></div>
+		<form data-form="first_form">
+			<fieldset id="questions">
+				<div class="radio-toolbar">
+					<div class="question-text">Malignancy</div>
+					<div class="question-description">Does the patient have a current diagnosis of malignant tumour (excluding skin basal and squamous cell carcinoma)?</div>
+					<input type="radio" id="malignancy1" name="malignancy" value="3">
+					<label for="malignancy1">Yes</label>
+
+					<input type="radio" id="malignancy2" name="malignancy" value="0">
+					<label style="border-top:none;" for="malignancy2">No</label>
+				</div>
+				<div class="radio-toolbar">
+					<div class="question-text">Liver cirrhosis</div>
+					<div class="question-description">Does the patient have a diagnosis of liver cirrhosis (based on clinical, laboratory, ultrasonography or histopathology results, where available)?</div>
+					<input type="radio" id="cirrhosis1" name="cirrhosis" value="4">
+					<label for="cirrhosis1">Yes</label>
+
+					<input type="radio" id="cirrhosis2" name="cirrhosis" value="0">
+					<label style="border-top:none;" for="cirrhosis2">No</label>
+				</div>
+				<div class="radio-toolbar">
+					<div class="question-text">Urinary / Central Venous Catheter, Or Other Source</div>
+					<div class="question-description">Is the likely source of bacteraemia from the urinary tract, or from a Central Venous Catheter?</div>
+					<input type="radio" id="bsi1" name="bsi" value="0">
+					<label for="bsi1">Urinary or Central Venous Catheter</label>
+
+					<input type="radio" id="bsi2" name="bsi" value="4">
+					<label style="border-top:none;" for="bsi2">Other</label>
+				</div>
+			</fieldset>
+				<!-- pitt bacteraemia sub quiz -->
+			<fieldset id="sub-questions">
+				<div id="sub-quiz">
+					<h2>Pitt bacteraemia score</h2>
+					<div class="radio-toolbar">
+						<div class="question-text" style="padding-top: 0!important;">Fever</div>
+						<div class="question-description">Is the patient febrile? <i>NB: temperature measured orally</i></div>
+						<input type="radio" id="fever1" name="fever" value="2">
+						<label for="fever1">&leq;35&deg;C or &GreaterEqual;40&deg;C</label>
+	
+						<input type="radio" id="fever2" name="fever" value="1">
+						<label style="border-top:none;" for="fever2">35.1–36.0&deg;C or  39.0–39.9&deg;C</label>
+
+						<input type="radio" id="fever3" name="fever" value="0">
+						<label style="border-top:none;" for="fever3">36.1–38.9&deg;C</label>
+					</div>
+					<div class="radio-toolbar">
+						<div class="question-text">Hypotension</div>
+						<div class="question-description">Does the patient have any of the following hypotensive episodes? (More than one may apply):
+							<ul>
+								<li>An acute hypotensive event with drop in SBP >30mmHg and DBP >20mmHg</li>
+								<i>AND/OR</i><br>
+								<li>Requirement for IV vasopressor agents</li>
+								<i>AND/OR</i><br>
+								<li>Systolic Blood Pressure of <90mmHg</li>
+							</ul>
+						</div>
+						<input type="radio" id="hypotension1" name="hypotension" value="2">
+						<label for="hypotension1">Yes</label>
+	
+						<input type="radio" id="hypotension2" name="hypotension" value="0">
+						<label style="border-top:none;" for="hypotension2">No</label>
+					</div>
+					<div class="radio-toolbar">
+						<div class="question-text">Mechanical ventiliation?</div>
+						<div class="question-description">Is the patient on non-invasive (e.g. BiPAP, CPAP) or invasive (i.e. intubated) ventilation?</div>
+						<input type="radio" id="ventiliation1" name="ventiliation" value="2">
+						<label for="ventiliation1">Yes</label>
+	
+						<input type="radio" id="ventiliation2" name="ventiliation" value="0">
+						<label style="border-top:none;" for="ventiliation2">No</label>
+					</div>
+					<div class="radio-toolbar">
+						<div class="question-text">Cardiac arrest?</div>
+						<div class="question-description">Has the patient had a cardiac arrest either on the day the positive blood culture was taken OR preceding 48 hours?</div>
+						<input type="radio" id="cardiac1" name="cardiac" value="4">
+						<label for="cardiac1">Yes</label>
+	
+						<input type="radio" id="cardiac2" name="cardiac" value="0">
+						<label style="border-top:none;" for="cardiac2">No</label>
+					</div>
+					<div class="radio-toolbar">
+						<div class="question-text">Mental status?</div>
+						<div class="question-description">What is the patient's level of consciousness on the date of the blood culture?</div>
+						<input type="radio" id="mental1" name="mental" value="0">
+						<label for="mental1">Alert</label>
+	
+						<input type="radio" id="mental2" name="mental" value="1">
+						<label style="border-top:none;" for="mental2">Disoriented</label>
+	
+						<input type="radio" id="mental3" name="mental" value="2">
+						<label style="border-top:none;" for="mental3">Stuporous</label>
+	
+						<input type="radio" id="mental4" name="mental" value="4">
+						<label style="border-top:none;" for="mental4">Comatose</label>
+					</div>
+				</div>
+			</fieldset>
+			<div>
+				<input id="calculate-button" type="submit" value="Calculate Score">
+			</div>
+		</form>
+
+		<div id="results-container">
+			<h1>Results</h1>
+			<div id="results-message"></div>
+		</div>
+
+		<div id="footer">
+			Designed by Oliver Troise & Dr Blake Troise<br>	
+			© 2021 Chelsea and Westminster Hospital NHS Foundation Trust
+		</div>
+	</div>
+</body>
+</html>
